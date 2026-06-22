@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { fetchRandomQuote } from '../services/quoteApi';
 
@@ -6,44 +6,48 @@ type QuoteState = {
   content: string | null;
   author: string | null;
   isLoading: boolean;
+  isRefreshing: boolean;
   hasError: boolean;
-};
-
-const initialState: QuoteState = {
-  content: null,
-  author: null,
-  isLoading: true,
-  hasError: false,
+  refresh: () => Promise<void>;
 };
 
 export function useQuote(): QuoteState {
-  const [state, setState] = useState<QuoteState>(initialState);
+  const [content, setContent] = useState<string | null>(null);
+  const [author, setAuthor] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadQuote() {
-      setState((prev) => ({ ...prev, isLoading: true, hasError: false }));
-
-      try {
-        const quote = await fetchRandomQuote();
-
-        if (isMounted) {
-          setState({ content: quote.content, author: quote.author, isLoading: false, hasError: false });
-        }
-      } catch {
-        if (isMounted) {
-          setState({ content: null, author: null, isLoading: false, hasError: true });
-        }
-      }
+  const loadQuote = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
     }
 
-    loadQuote();
+    setHasError(false);
 
-    return () => {
-      isMounted = false;
-    };
+    try {
+      const quote = await fetchRandomQuote();
+      setContent(quote.content);
+      setAuthor(quote.author);
+    } catch {
+      setContent(null);
+      setAuthor(null);
+      setHasError(true);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
   }, []);
 
-  return state;
+  useEffect(() => {
+    void loadQuote(false);
+  }, [loadQuote]);
+
+  const refresh = useCallback(async () => {
+    await loadQuote(true);
+  }, [loadQuote]);
+
+  return { content, author, isLoading, isRefreshing, hasError, refresh };
 }

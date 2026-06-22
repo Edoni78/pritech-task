@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
 
 import { TaskCard } from './TaskCard';
 import { colors } from '../constants/colors';
@@ -27,7 +28,7 @@ export function SwipeableTaskCard({
       accessibilityRole="button"
       accessibilityLabel="Delete task"
     >
-      <Text style={styles.deleteText}>Delete</Text>
+      <Ionicons name="trash-outline" size={22} color={colors.surface} />
     </Pressable>
   );
 
@@ -53,13 +54,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 88,
+    width: 72,
     borderRadius: 16,
     marginLeft: 8,
-  },
-  deleteText: {
-    color: colors.surface,
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

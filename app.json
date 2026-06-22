@@ -7,7 +7,7 @@
     "userInterfaceStyle": "light",
     "splash": {
       "resizeMode": "contain",
-      "backgroundColor": "#F5F7FA"
+      "backgroundColor": "#F8FAFC"
     },
     "ios": {
       "supportsTablet": true

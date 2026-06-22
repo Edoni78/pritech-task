@@ -10,7 +10,13 @@ A simple, polished React Native app for managing personal tasks. Create tasks, m
 - Edit existing tasks
 - Mark tasks as completed or pending
 - Delete tasks with confirmation
-- Swipe left on a task card to reveal delete
+- Personalized home header with greeting and task count
+- Floating action button to add tasks
+- Statistics cards (Total / Done)
+- Compact filter + sort dropdown layout
+- Pull to refresh for daily motivation quote
+- Productivity score and completion streak
+- Swipe left to delete, tap to open, long-press to edit
 - Task details screen
 - Live search by title (case-insensitive)
 - Filter by All / Pending / Completed

@@ -1,20 +1,24 @@
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '../components/EmptyState';
-import { FilterTabs } from '../components/FilterTabs';
+import { FilterSortRow } from '../components/FilterSortRow';
+import { FloatingActionButton } from '../components/FloatingActionButton';
+import { HomeHeader } from '../components/HomeHeader';
 import { QuoteCard } from '../components/QuoteCard';
-import { SortTabs } from '../components/SortTabs';
+import { SearchField } from '../components/SearchField';
+import { StatsCards } from '../components/StatsCards';
 import { SwipeableTaskCard } from '../components/SwipeableTaskCard';
 import { colors } from '../constants/colors';
 import { useTasks } from '../context/TasksContext';
@@ -22,6 +26,7 @@ import { useQuote } from '../hooks/useQuote';
 import type { RootStackParamList } from '../navigation/types';
 import type { Task, TaskFilter, TaskSortOption } from '../types/task';
 import { sortTasks } from '../utils/sortTasks';
+import { getCompletionStreak, getTaskStats } from '../utils/stats';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'TaskList'>;
 
@@ -46,6 +51,7 @@ const Separator = () => <View style={styles.separator} />;
 
 export function TaskListScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
   const { tasks, isLoading, storageError, toggleTaskStatus, deleteTask } = useTasks();
   const quote = useQuote();
 
@@ -53,24 +59,13 @@ export function TaskListScreen() {
   const [filter, setFilter] = useState<TaskFilter>('all');
   const [sort, setSort] = useState<TaskSortOption>('newest');
 
+  const stats = useMemo(() => getTaskStats(tasks), [tasks]);
+  const streak = useMemo(() => getCompletionStreak(tasks), [tasks]);
+
   const displayedTasks = useMemo(() => {
     const filtered = applyFilters(tasks, searchQuery, filter);
     return sortTasks(filtered, sort);
   }, [tasks, searchQuery, filter, sort]);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Text
-          onPress={() => navigation.navigate('AddTask')}
-          style={styles.headerAction}
-          accessibilityRole="button"
-        >
-          Add Task
-        </Text>
-      ),
-    });
-  }, [navigation]);
 
   const handleDelete = useCallback(
     (taskId: string) => {
@@ -107,6 +102,10 @@ export function TaskListScreen() {
     [navigation],
   );
 
+  const handleAddTask = useCallback(() => {
+    navigation.navigate('AddTask');
+  }, [navigation]);
+
   const listEmptyComponent = useMemo(() => {
     if (isLoading) {
       return (
@@ -121,9 +120,9 @@ export function TaskListScreen() {
       return (
         <EmptyState
           title="No tasks yet"
-          message="Create your first task to start organizing your day."
-          actionLabel="Add Task"
-          onAction={() => navigation.navigate('AddTask')}
+          message="Create your first task and stay organized."
+          actionLabel="Create First Task"
+          onAction={handleAddTask}
         />
       );
     }
@@ -132,9 +131,43 @@ export function TaskListScreen() {
       <EmptyState
         title="No matching tasks"
         message="Try adjusting your search or filter to find what you need."
+        variant="search"
       />
     );
-  }, [isLoading, tasks.length, navigation]);
+  }, [isLoading, tasks.length, handleAddTask]);
+
+  const listHeader = (
+    <View style={styles.listHeader}>
+      <HomeHeader taskCount={tasks.length} />
+
+      {storageError ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>{storageError}</Text>
+        </View>
+      ) : null}
+
+      {tasks.length > 0 ? (
+        <StatsCards total={stats.total} completed={stats.completed} />
+      ) : null}
+
+      <QuoteCard
+        quote={quote.content}
+        author={quote.author}
+        isLoading={quote.isLoading}
+        productivityScore={stats.productivityScore}
+        streak={streak}
+      />
+
+      <SearchField value={searchQuery} onChangeText={setSearchQuery} />
+
+      <FilterSortRow
+        filter={filter}
+        sort={sort}
+        onFilterChange={setFilter}
+        onSortChange={setSort}
+      />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -143,37 +176,10 @@ export function TaskListScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.listContent,
+          { paddingTop: insets.top + 8 },
           displayedTasks.length === 0 && styles.listContentEmpty,
         ]}
-        ListHeaderComponent={
-          <View style={styles.listHeader}>
-            {storageError ? (
-              <View style={styles.errorBanner}>
-                <Text style={styles.errorBannerText}>{storageError}</Text>
-              </View>
-            ) : null}
-
-            <QuoteCard
-              quote={quote.content}
-              author={quote.author}
-              isLoading={quote.isLoading}
-              hasError={quote.hasError}
-            />
-
-            <TextInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search by title..."
-              placeholderTextColor={colors.textMuted}
-              style={styles.searchInput}
-              clearButtonMode="while-editing"
-              accessibilityLabel="Search tasks by title"
-            />
-
-            <FilterTabs selected={filter} onSelect={setFilter} />
-            <SortTabs selected={sort} onSelect={setSort} />
-          </View>
-        }
+        ListHeaderComponent={listHeader}
         renderItem={({ item }) => (
           <SwipeableTaskCard
             task={item}
@@ -185,7 +191,18 @@ export function TaskListScreen() {
         )}
         ItemSeparatorComponent={Separator}
         ListEmptyComponent={listEmptyComponent}
+        refreshControl={
+          <RefreshControl
+            refreshing={quote.isRefreshing}
+            onRefresh={() => void quote.refresh()}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+        showsVerticalScrollIndicator={false}
       />
+
+      <FloatingActionButton onPress={handleAddTask} />
     </View>
   );
 }
@@ -196,39 +213,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   listContent: {
-    padding: 16,
-    gap: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 100,
+    gap: 10,
   },
   listContentEmpty: {
     flexGrow: 1,
   },
   listHeader: {
-    gap: 16,
+    gap: 12,
     marginBottom: 4,
   },
-  headerAction: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
-    paddingHorizontal: 4,
-  },
-  searchInput: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: colors.text,
-  },
   separator: {
-    height: 12,
+    height: 10,
   },
   centered: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
+    paddingVertical: 40,
     gap: 12,
   },
   loadingText: {

@@ -1,9 +1,9 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import { StatusBadge } from './StatusBadge';
 import { colors } from '../constants/colors';
 import type { Task } from '../types/task';
-import { formatDate } from '../utils/date';
+import { formatRelativeDateTime } from '../utils/date';
 
 type TaskCardProps = {
   task: Task;
@@ -13,63 +13,53 @@ type TaskCardProps = {
   onEdit: (taskId: string) => void;
 };
 
-export function TaskCard({ task, onToggleStatus, onDelete, onOpenDetails, onEdit }: TaskCardProps) {
+export function TaskCard({ task, onToggleStatus, onOpenDetails, onEdit }: TaskCardProps) {
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title} numberOfLines={1}>
+    <Pressable
+      onPress={() => onOpenDetails(task.id)}
+      onLongPress={() => onEdit(task.id)}
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      accessibilityRole="button"
+      accessibilityLabel={`Open task ${task.title}`}
+    >
+      <View style={styles.row}>
+        <Pressable
+          onPress={(event) => {
+            event.stopPropagation();
+            onToggleStatus(task.id);
+          }}
+          style={[styles.checkbox, task.completed && styles.checkboxCompleted]}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: task.completed }}
+          accessibilityLabel={task.completed ? 'Mark as pending' : 'Mark as completed'}
+          hitSlop={8}
+        >
+          {task.completed ? (
+            <Ionicons name="checkmark" size={16} color={colors.surface} />
+          ) : null}
+        </Pressable>
+
+        <View style={styles.content}>
+          <Text
+            style={[styles.title, task.completed && styles.titleCompleted]}
+            numberOfLines={1}
+          >
             {task.title}
           </Text>
-          <StatusBadge completed={task.completed} />
-        </View>
-        <Text style={styles.date}>{formatDate(task.createdAt)}</Text>
-      </View>
 
-      <Text style={styles.description} numberOfLines={2}>
-        {task.description}
-      </Text>
-
-      <View style={styles.actions}>
-        <Pressable
-          onPress={() => onToggleStatus(task.id)}
-          style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
-          accessibilityRole="button"
-          accessibilityLabel={task.completed ? 'Mark as pending' : 'Mark as completed'}
-        >
-          <Text style={styles.actionTextPrimary}>
-            {task.completed ? 'Mark Pending' : 'Mark Completed'}
+          <Text style={styles.description} numberOfLines={2}>
+            {task.description}
           </Text>
-        </Pressable>
 
-        <Pressable
-          onPress={() => onEdit(task.id)}
-          style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
-          accessibilityRole="button"
-          accessibilityLabel="Edit task"
-        >
-          <Text style={styles.actionTextSecondary}>Edit</Text>
-        </Pressable>
+          <View style={styles.metaRow}>
+            <Ionicons name="time-outline" size={12} color={colors.textMuted} />
+            <Text style={styles.meta}>{formatRelativeDateTime(task.createdAt)}</Text>
+          </View>
+        </View>
 
-        <Pressable
-          onPress={() => onOpenDetails(task.id)}
-          style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
-          accessibilityRole="button"
-          accessibilityLabel="View task details"
-        >
-          <Text style={styles.actionTextSecondary}>Details</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => onDelete(task.id)}
-          style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
-          accessibilityRole="button"
-          accessibilityLabel="Delete task"
-        >
-          <Text style={styles.actionTextDanger}>Delete</Text>
-        </Pressable>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -77,67 +67,65 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-    gap: 12,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  header: {
-    gap: 4,
+  cardPressed: {
+    opacity: 0.96,
+    transform: [{ scale: 0.995 }],
   },
-  titleRow: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: 12,
   },
-  title: {
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+  },
+  checkboxCompleted: {
+    backgroundColor: colors.completed,
+    borderColor: colors.completed,
+  },
+  content: {
     flex: 1,
-    fontSize: 17,
+    gap: 4,
+  },
+  title: {
+    fontSize: 16,
     fontWeight: '700',
     color: colors.text,
+    letterSpacing: -0.2,
   },
-  date: {
-    fontSize: 13,
+  titleCompleted: {
     color: colors.textMuted,
+    textDecorationLine: 'line-through',
   },
   description: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.textSecondary,
-    lineHeight: 22,
+    lineHeight: 20,
   },
-  actions: {
+  metaRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
   },
-  actionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: colors.background,
-  },
-  actionPressed: {
-    opacity: 0.7,
-  },
-  actionTextPrimary: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  actionTextSecondary: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  actionTextDanger: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.danger,
+  meta: {
+    fontSize: 12,
+    color: colors.textMuted,
   },
 });

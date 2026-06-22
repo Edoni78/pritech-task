@@ -1,37 +1,33 @@
 export const colors = {
-  // Backgrounds
-  background: '#F5F7FA',
+  background: '#F8FAFC',
   surface: '#FFFFFF',
 
-  // Brand
   primary: '#2563EB',
   primaryLight: '#EFF6FF',
   primaryDark: '#1D4ED8',
   primaryDisabled: '#93C5FD',
+  primarySoft: '#DBEAFE',
 
-  // Text
-  text: '#111827',
-  textSecondary: '#6B7280',
-  textMuted: '#9CA3AF',
+  text: '#0F172A',
+  textSecondary: '#64748B',
+  textMuted: '#94A3B8',
 
-  // Borders
-  border: '#E5E7EB',
+  border: '#E2E8F0',
   quoteBorder: '#BFDBFE',
 
-  // Status — completed
   completed: '#16A34A',
   completedBg: '#DCFCE7',
 
-  // Status — pending
-  pending: '#6B7280',
-  pendingBg: '#F3F4F6',
+  pending: '#64748B',
+  pendingBg: '#F1F5F9',
 
-  // Danger
   danger: '#DC2626',
   dangerLight: '#FEF2F2',
   dangerBorder: '#FECACA',
   dangerPressed: '#FEE2E2',
 
-  // Misc
-  shadow: '#000000',
+  accent: '#F59E0B',
+  accentLight: '#FEF3C7',
+
+  shadow: '#0F172A',
 } as const;
