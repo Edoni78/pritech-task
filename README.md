@@ -1,56 +1,155 @@
-# Welcome to your Expo app 👋
+# PRITECH React Native Technical Task
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A simple, polished React Native app for managing personal tasks. Create tasks, mark them complete, search, filter, and view details — all stored locally on your device.
 
-## Get started
+---
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+- Add tasks with title and description
+- Mark tasks as completed or pending
+- Delete tasks with confirmation
+- Task details screen
+- Live search by title (case-insensitive)
+- Filter by All / Pending / Completed
+- Local persistence with AsyncStorage
+- Motivational quote from a public API (with loading and offline fallback)
+- Empty states, validation, and error handling
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Tech Stack
 
-In the output, you'll find options to open the app in a
+| Area | Choice |
+|------|--------|
+| Framework | React Native (Expo SDK 54) |
+| Language | TypeScript |
+| Navigation | React Navigation — Native Stack |
+| Storage | AsyncStorage |
+| State | React Context + hooks (no Redux) |
+| Public API | [Quotable](https://api.quotable.io/random) |
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Running Locally
 
-## Get a fresh project
+### 1 — Prerequisites
 
-When you're ready, run:
+- **Node.js 18+** — [nodejs.org](https://nodejs.org)
+- **Expo Go** installed on your phone:
+  - iOS → [App Store](https://apps.apple.com/app/expo-go/id982107779)
+  - Android → [Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
+
+> Make sure Expo Go is **up to date**. This project uses Expo SDK 54.
+
+---
+
+### 2 — Install dependencies
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-### Other setup steps
+### 3 — Start the dev server
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npx expo start
+```
 
-## Learn more
+A QR code will appear in the terminal.
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 4 — Open on your phone
 
-## Join the community
+| Platform | Steps |
+|----------|-------|
+| **Android** | Open Expo Go → tap **Scan QR Code** → scan the terminal QR |
+| **iOS** | Open the Camera app → point at the QR → tap the Expo Go banner |
 
-Join our community of developers creating universal apps.
+> Do **not** open `http://localhost:8081` in a desktop browser — that URL only shows the JSON manifest, not the app.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+### Optional — run on a simulator
+
+```bash
+# Android emulator (requires Android Studio)
+npx expo start --android
+
+# iOS simulator (macOS + Xcode only)
+npx expo start --ios
+```
+
+---
+
+## Project Structure
+
+```
+pritech-task/
+├── App.tsx                     Entry point — providers + navigation
+├── index.js                    Expo app registration
+├── src/
+│   ├── components/
+│   │   ├── Button.tsx          Primary / outline / danger button
+│   │   ├── EmptyState.tsx      Empty list and no-results states
+│   │   ├── FilterTabs.tsx      All / Pending / Completed tabs
+│   │   ├── QuoteCard.tsx       Motivational quote display
+│   │   ├── StatusBadge.tsx     Completed / Pending badge
+│   │   ├── TaskCard.tsx        Task list item card
+│   │   └── TextInputField.tsx  Labeled input with error message
+│   ├── constants/
+│   │   ├── colors.ts           Design tokens
+│   │   └── storage.ts          AsyncStorage key
+│   ├── context/
+│   │   └── TasksContext.tsx    Global task state + CRUD operations
+│   ├── hooks/
+│   │   └── useQuote.ts         Custom hook for quote API
+│   ├── navigation/
+│   │   ├── AppNavigator.tsx    Stack navigator
+│   │   └── types.ts            Route param types
+│   ├── screens/
+│   │   ├── AddTaskScreen.tsx
+│   │   ├── TaskDetailsScreen.tsx
+│   │   └── TaskListScreen.tsx
+│   ├── services/
+│   │   ├── quoteApi.ts         Quotable API fetch + validation
+│   │   └── taskStorage.ts      AsyncStorage read/write
+│   ├── types/
+│   │   └── task.ts             Task, TaskFilter, form types
+│   └── utils/
+│       ├── date.ts             Date formatting helper
+│       ├── task.ts             Task factory
+│       └── validation.ts       Form validation logic
+```
+
+---
+
+## Public API
+
+**Endpoint:** `GET https://api.quotable.io/random`
+
+Fetched once when the Task List screen loads. Displays a motivational quote at the top of the list. If the request fails or times out, a fallback message is shown and the app continues working normally.
+
+---
+
+## Implementation Notes
+
+- **Context over Redux** — `TasksContext` holds tasks in memory and syncs to AsyncStorage on every mutation. Simple and sufficient for this scope.
+- **Storage separation** — `taskStorage.ts` owns all AsyncStorage logic. No screen touches storage directly.
+- **API separation** — `quoteApi.ts` owns fetch logic and response validation. The `useQuote` hook owns the loading/error lifecycle.
+- **Validation** — `validateTaskForm` runs via `useMemo` so it only re-executes when form values change, not on every render.
+- **IDs** — `Date.now().toString()` — simple, unique, no extra dependency.
+
+
+
+## Future Improvements
+
+- Edit existing tasks
+- Swipe-to-delete gesture
+- Sort by date or status
+- Dark mode
+- Unit tests for validation and storage utilities
+- Offline quote caching
