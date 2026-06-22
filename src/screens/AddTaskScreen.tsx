@@ -1,132 +1,47 @@
-import { useCallback, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { Button } from '../components/Button';
-import { TextInputField } from '../components/TextInputField';
-import { colors } from '../constants/colors';
+import { TaskForm } from '../components/TaskForm';
 import { useTasks } from '../context/TasksContext';
+import { useTaskForm } from '../hooks/useTaskForm';
 import type { RootStackParamList } from '../navigation/types';
-import type { TaskFormErrors, TaskFormValues } from '../types/task';
-import { isFormValid, validateTaskForm } from '../utils/validation';
+import { isFormValid } from '../utils/validation';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'AddTask'>;
 
-const INITIAL_VALUES: TaskFormValues = { title: '', description: '' };
+const INITIAL_VALUES = { title: '', description: '' };
 
 export function AddTaskScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { addTask } = useTasks();
-
-  const [values, setValues] = useState<TaskFormValues>(INITIAL_VALUES);
-  const [errors, setErrors] = useState<TaskFormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Derived — recomputed only when values change, not on every render
-  const validationErrors = useMemo(() => validateTaskForm(values), [values]);
-  const canSubmit = isFormValid(validationErrors) && !isSubmitting;
-
-  const updateField = useCallback((field: keyof TaskFormValues, text: string) => {
-    setValues((prev) => ({ ...prev, [field]: text }));
-    // Clear the error for this field as soon as the user starts correcting it
-    setErrors((prev) => {
-      if (!prev[field]) return prev;
-      const next = { ...prev };
-      delete next[field];
-      return next;
-    });
-  }, []);
-
-  const handleBlur = useCallback(
-    (field: keyof TaskFormValues) => {
-      setErrors((prev) => {
-        const next = { ...prev };
-        if (validationErrors[field]) {
-          next[field] = validationErrors[field];
-        } else {
-          delete next[field];
-        }
-        return next;
-      });
-    },
-    [validationErrors],
-  );
+  const form = useTaskForm(INITIAL_VALUES);
 
   const handleSubmit = useCallback(async () => {
-    // Show all errors on submit attempt
-    setErrors(validationErrors);
+    const errors = form.validateAndGetValues();
+    if (!isFormValid(errors) || form.isSubmitting) return;
 
-    if (!isFormValid(validationErrors) || isSubmitting) return;
-
-    setIsSubmitting(true);
+    form.setIsSubmitting(true);
 
     try {
-      await addTask(values.title, values.description);
+      await addTask(form.values.title, form.values.description);
       navigation.goBack();
     } finally {
-      setIsSubmitting(false);
+      form.setIsSubmitting(false);
     }
-  }, [validationErrors, isSubmitting, addTask, values, navigation]);
+  }, [form, addTask, navigation]);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-      >
-        <TextInputField
-          label="Title"
-          value={values.title}
-          onChangeText={(text) => updateField('title', text)}
-          onBlur={() => handleBlur('title')}
-          error={errors.title}
-          placeholder="What do you need to do?"
-        />
-
-        <TextInputField
-          label="Description"
-          value={values.description}
-          onChangeText={(text) => updateField('description', text)}
-          onBlur={() => handleBlur('description')}
-          error={errors.description}
-          placeholder="Add a few details..."
-          multiline
-        />
-
-        <View style={styles.actions}>
-          <Button
-            label="Save Task"
-            onPress={() => void handleSubmit()}
-            disabled={!canSubmit}
-            loading={isSubmitting}
-          />
-          <Button
-            label="Cancel"
-            variant="outline"
-            onPress={() => navigation.goBack()}
-            disabled={isSubmitting}
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <TaskForm
+      values={form.values}
+      errors={form.errors}
+      canSubmit={form.canSubmit}
+      isSubmitting={form.isSubmitting}
+      submitLabel="Save Task"
+      onChangeField={form.updateField}
+      onBlurField={form.handleBlur}
+      onSubmit={() => void handleSubmit()}
+      onCancel={() => navigation.goBack()}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: 16,
-    gap: 20,
-  },
-  actions: {
-    gap: 12,
-    marginTop: 8,
-  },
-});

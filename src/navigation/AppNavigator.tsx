@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AddTaskScreen } from '../screens/AddTaskScreen';
+import { EditTaskScreen } from '../screens/EditTaskScreen';
 import { TaskDetailsScreen } from '../screens/TaskDetailsScreen';
 import { TaskListScreen } from '../screens/TaskListScreen';
 import { colors } from '../constants/colors';
@@ -32,6 +33,11 @@ export function AppNavigator() {
         name="AddTask"
         component={AddTaskScreen}
         options={{ title: 'Add Task' }}
+      />
+      <Stack.Screen
+        name="EditTask"
+        component={EditTaskScreen}
+        options={{ title: 'Edit Task' }}
       />
       <Stack.Screen
         name="TaskDetails"

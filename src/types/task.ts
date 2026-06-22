@@ -8,6 +8,8 @@ export type Task = {
 
 export type TaskFilter = 'all' | 'pending' | 'completed';
 
+export type TaskSortOption = 'newest' | 'oldest' | 'status';
+
 export type TaskFormValues = {
   title: string;
   description: string;

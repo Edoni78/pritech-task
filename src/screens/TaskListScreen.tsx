@@ -14,12 +14,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { EmptyState } from '../components/EmptyState';
 import { FilterTabs } from '../components/FilterTabs';
 import { QuoteCard } from '../components/QuoteCard';
-import { TaskCard } from '../components/TaskCard';
+import { SortTabs } from '../components/SortTabs';
+import { SwipeableTaskCard } from '../components/SwipeableTaskCard';
 import { colors } from '../constants/colors';
 import { useTasks } from '../context/TasksContext';
 import { useQuote } from '../hooks/useQuote';
 import type { RootStackParamList } from '../navigation/types';
-import type { Task, TaskFilter } from '../types/task';
+import type { Task, TaskFilter, TaskSortOption } from '../types/task';
+import { sortTasks } from '../utils/sortTasks';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'TaskList'>;
 
@@ -49,11 +51,12 @@ export function TaskListScreen() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<TaskFilter>('all');
+  const [sort, setSort] = useState<TaskSortOption>('newest');
 
-  const filteredTasks = useMemo(
-    () => applyFilters(tasks, searchQuery, filter),
-    [tasks, searchQuery, filter],
-  );
+  const displayedTasks = useMemo(() => {
+    const filtered = applyFilters(tasks, searchQuery, filter);
+    return sortTasks(filtered, sort);
+  }, [tasks, searchQuery, filter, sort]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -99,6 +102,11 @@ export function TaskListScreen() {
     [navigation],
   );
 
+  const handleEdit = useCallback(
+    (taskId: string) => navigation.navigate('EditTask', { taskId }),
+    [navigation],
+  );
+
   const listEmptyComponent = useMemo(() => {
     if (isLoading) {
       return (
@@ -131,11 +139,11 @@ export function TaskListScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={filteredTasks}
+        data={displayedTasks}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.listContent,
-          filteredTasks.length === 0 && styles.listContentEmpty,
+          displayedTasks.length === 0 && styles.listContentEmpty,
         ]}
         ListHeaderComponent={
           <View style={styles.listHeader}>
@@ -163,14 +171,16 @@ export function TaskListScreen() {
             />
 
             <FilterTabs selected={filter} onSelect={setFilter} />
+            <SortTabs selected={sort} onSelect={setSort} />
           </View>
         }
         renderItem={({ item }) => (
-          <TaskCard
+          <SwipeableTaskCard
             task={item}
             onToggleStatus={handleToggle}
             onDelete={handleDelete}
             onOpenDetails={handleOpenDetails}
+            onEdit={handleEdit}
           />
         )}
         ItemSeparatorComponent={Separator}

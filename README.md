@@ -7,11 +7,14 @@ A simple, polished React Native app for managing personal tasks. Create tasks, m
 ## Features
 
 - Add tasks with title and description
+- Edit existing tasks
 - Mark tasks as completed or pending
 - Delete tasks with confirmation
+- Swipe left on a task card to reveal delete
 - Task details screen
 - Live search by title (case-insensitive)
 - Filter by All / Pending / Completed
+- Sort by newest, oldest, or status
 - Local persistence with AsyncStorage
 - Motivational quote from a public API (with loading and offline fallback)
 - Empty states, validation, and error handling
@@ -97,7 +100,10 @@ pritech-task/
 │   │   ├── EmptyState.tsx      Empty list and no-results states
 │   │   ├── FilterTabs.tsx      All / Pending / Completed tabs
 │   │   ├── QuoteCard.tsx       Motivational quote display
+│   │   ├── SortTabs.tsx        Newest / Oldest / Status sort
 │   │   ├── StatusBadge.tsx     Completed / Pending badge
+│   │   ├── SwipeableTaskCard.tsx Swipe-to-delete wrapper
+│   │   ├── TaskForm.tsx        Shared add/edit form
 │   │   ├── TaskCard.tsx        Task list item card
 │   │   └── TextInputField.tsx  Labeled input with error message
 │   ├── constants/
@@ -106,12 +112,14 @@ pritech-task/
 │   ├── context/
 │   │   └── TasksContext.tsx    Global task state + CRUD operations
 │   ├── hooks/
-│   │   └── useQuote.ts         Custom hook for quote API
+│   │   ├── useQuote.ts         Custom hook for quote API
+│   │   └── useTaskForm.ts      Shared form state for add/edit
 │   ├── navigation/
 │   │   ├── AppNavigator.tsx    Stack navigator
 │   │   └── types.ts            Route param types
 │   ├── screens/
 │   │   ├── AddTaskScreen.tsx
+│   │   ├── EditTaskScreen.tsx
 │   │   ├── TaskDetailsScreen.tsx
 │   │   └── TaskListScreen.tsx
 │   ├── services/
@@ -121,6 +129,7 @@ pritech-task/
 │   │   └── task.ts             Task, TaskFilter, form types
 │   └── utils/
 │       ├── date.ts             Date formatting helper
+│       ├── sortTasks.ts        Sort by date or status
 │       ├── task.ts             Task factory
 │       └── validation.ts       Form validation logic
 ```
@@ -143,13 +152,5 @@ Fetched once when the Task List screen loads. Displays a motivational quote at t
 - **Validation** — `validateTaskForm` runs via `useMemo` so it only re-executes when form values change, not on every render.
 - **IDs** — `Date.now().toString()` — simple, unique, no extra dependency.
 
+---
 
-
-## Future Improvements
-
-- Edit existing tasks
-- Swipe-to-delete gesture
-- Sort by date or status
-- Dark mode
-- Unit tests for validation and storage utilities
-- Offline quote caching

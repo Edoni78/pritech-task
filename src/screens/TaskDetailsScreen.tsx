@@ -79,6 +79,11 @@ export function TaskDetailsScreen() {
           label={task.completed ? 'Mark as Pending' : 'Mark as Completed'}
           onPress={handleToggle}
         />
+        <Button
+          label="Edit Task"
+          variant="outline"
+          onPress={() => navigation.navigate('EditTask', { taskId: task.id })}
+        />
         <Button label="Delete Task" variant="danger" onPress={handleDelete} />
       </View>
     </ScrollView>

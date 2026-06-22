@@ -17,6 +17,7 @@ type TasksContextValue = {
   isLoading: boolean;
   storageError: string | null;
   addTask: (title: string, description: string) => Promise<void>;
+  updateTask: (taskId: string, title: string, description: string) => Promise<void>;
   toggleTaskStatus: (taskId: string) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
   getTaskById: (taskId: string) => Task | undefined;
@@ -81,6 +82,19 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     [persistTasks, tasks],
   );
 
+  const updateTask = useCallback(
+    async (taskId: string, title: string, description: string) => {
+      const nextTasks = tasks.map((task) =>
+        task.id === taskId
+          ? { ...task, title: title.trim(), description: description.trim() }
+          : task,
+      );
+      setTasks(nextTasks);
+      await persistTasks(nextTasks);
+    },
+    [persistTasks, tasks],
+  );
+
   const toggleTaskStatus = useCallback(
     async (taskId: string) => {
       const nextTasks = tasks.map((task) =>
@@ -112,11 +126,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       isLoading,
       storageError,
       addTask,
+      updateTask,
       toggleTaskStatus,
       deleteTask,
       getTaskById,
     }),
-    [tasks, isLoading, storageError, addTask, toggleTaskStatus, deleteTask, getTaskById],
+    [tasks, isLoading, storageError, addTask, updateTask, toggleTaskStatus, deleteTask, getTaskById],
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;

@@ -10,9 +10,10 @@ type TaskCardProps = {
   onToggleStatus: (taskId: string) => void;
   onDelete: (taskId: string) => void;
   onOpenDetails: (taskId: string) => void;
+  onEdit: (taskId: string) => void;
 };
 
-export function TaskCard({ task, onToggleStatus, onDelete, onOpenDetails }: TaskCardProps) {
+export function TaskCard({ task, onToggleStatus, onDelete, onOpenDetails, onEdit }: TaskCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -39,6 +40,15 @@ export function TaskCard({ task, onToggleStatus, onDelete, onOpenDetails }: Task
           <Text style={styles.actionTextPrimary}>
             {task.completed ? 'Mark Pending' : 'Mark Completed'}
           </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => onEdit(task.id)}
+          style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
+          accessibilityRole="button"
+          accessibilityLabel="Edit task"
+        >
+          <Text style={styles.actionTextSecondary}>Edit</Text>
         </Pressable>
 
         <Pressable
